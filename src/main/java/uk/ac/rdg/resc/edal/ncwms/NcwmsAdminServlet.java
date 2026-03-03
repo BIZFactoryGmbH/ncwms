@@ -435,8 +435,11 @@ public class NcwmsAdminServlet extends HttpServlet {
                 try {
                     validateLocation(newLocation);
                 } catch (IllegalArgumentException e) {
+                    log.warn("Rejected invalid dataset location for '{}': {}",
+                            ds.getId(), e.getMessage());
                     try {
-                        response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                                "Invalid dataset location. See server logs for details.");
                     } catch (IOException ioe) {
                         log.error("Failed to send 400 error for invalid location", ioe);
                     }

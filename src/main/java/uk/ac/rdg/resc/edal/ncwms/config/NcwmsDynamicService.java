@@ -105,8 +105,19 @@ public class NcwmsDynamicService {
     }
 
     public Pattern getIdMatchPattern() {
-        if (idMatchPattern == null) {
-            idMatchPattern = Pattern.compile(datasetIdMatch);
+        if (idMatchPattern == null && datasetIdMatch != null) {
+            // Re-apply the same guards as setDatasetIdMatch() to handle
+            // patterns loaded from XML config (JAXB bypasses the setter).
+            if (datasetIdMatch.length() > MAX_REGEX_LENGTH) {
+                throw new IllegalStateException(
+                        "datasetIdMatch regex exceeds maximum length of " + MAX_REGEX_LENGTH + " characters");
+            }
+            try {
+                idMatchPattern = Pattern.compile(datasetIdMatch);
+            } catch (java.util.regex.PatternSyntaxException e) {
+                throw new IllegalStateException(
+                        "Invalid regex for datasetIdMatch: " + e.getDescription(), e);
+            }
         }
         return idMatchPattern;
     }
