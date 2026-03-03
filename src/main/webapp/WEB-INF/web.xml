@@ -124,6 +124,30 @@
             <transport-guarantee>NONE</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>refresh</web-resource-name>
+            <url-pattern>/refresh/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>ncWMS-admin</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>NONE</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>statistics</web-resource-name>
+            <url-pattern>/statistics</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>ncWMS-admin</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>NONE</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
     <login-config>
         <auth-method>DIGEST</auth-method>
         <realm-name>Login to administer ncWMS</realm-name>
