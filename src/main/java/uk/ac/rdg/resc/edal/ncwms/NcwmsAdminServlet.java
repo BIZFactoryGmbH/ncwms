@@ -451,7 +451,8 @@ public class NcwmsAdminServlet extends HttpServlet {
          * (or how many spaces were available in the admin page)
          */
         int i = 0;
-        while (request.getParameter("dataset.new" + i + ".id") != null) {
+        final int MAX_NEW_DATASETS = 50;
+        while (i < MAX_NEW_DATASETS && request.getParameter("dataset.new" + i + ".id") != null) {
             /* Look for non-blank ID fields */
             String id = request.getParameter("dataset.new" + i + ".id");
             if (id != null && !id.trim().equals("")) {
@@ -473,8 +474,13 @@ public class NcwmsAdminServlet extends HttpServlet {
                 ds.setDataReaderClass(request.getParameter("dataset.new" + i + ".reader"));
                 ds.setDisabled(request.getParameter("dataset.new" + i + ".disabled") != null);
                 ds.setQueryable(request.getParameter("dataset.new" + i + ".queryable") != null);
-                ds.setUpdateInterval(Integer
-                        .parseInt(request.getParameter("dataset.new" + i + ".updateinterval")));
+                String updateIntervalStr = request.getParameter("dataset.new" + i + ".updateinterval");
+                try {
+                    ds.setUpdateInterval(Integer.parseInt(updateIntervalStr));
+                } catch (NumberFormatException e) {
+                    log.warn("Invalid updateinterval '{}' for new dataset {}, defaulting to -1", updateIntervalStr, id);
+                    ds.setUpdateInterval(-1);
+                }
                 ds.setMoreInfo(request.getParameter("dataset.new" + i + ".moreinfo"));
                 ds.setCopyrightStatement(request.getParameter("dataset.new" + i + ".copyright"));
                 /*
