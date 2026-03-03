@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -70,11 +70,11 @@ import uk.ac.rdg.resc.edal.util.GISUtils.EpsgDatabasePath;
  * The main entry point of ncWMS. This deals with loading the configuration
  * object and storing it in the ServletContext so that other servlets can use
  * it.
- * 
+ *
  * It also deals with any requests which are not specific to WMS or
  * administration. This is any front-page requests as well as any other
  * information we may want to expose to non-admin users.
- * 
+ *
  * @author Guy Griffiths
  */
 public class NcwmsApplicationServlet extends HttpServlet {
@@ -244,8 +244,7 @@ public class NcwmsApplicationServlet extends HttpServlet {
          */
         // Set up the log4j logging system
         Properties logProps = new Properties();
-        InputStream log4jInputStream = getClass().getResourceAsStream("/log4j.properties");
-        try {
+        try (InputStream log4jInputStream = getClass().getResourceAsStream("/log4j.properties")) {
             logProps.load(log4jInputStream);
             logProps.put("log4j.appender.file.File",
                     logDirFile.getPath() + File.separator + "ncwms.log");
