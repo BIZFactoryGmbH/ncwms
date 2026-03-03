@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  TEMPLATE — copy to tomcat-users.xml and fill in real passwords.
+  This file is intentionally NOT committed (see .gitignore).
+
+  Password requirements:
+  - Use bcrypt hashes (Tomcat 10.1+) or SHA-256 (minimum) — NEVER SHA-1 or plain text.
+  - For Tomcat 8.5/9.x use CredentialHandler in server.xml:
+      <CredentialHandler className="org.apache.catalina.realm.SecretKeyCredentialHandler"
+                         algorithm="PBKDF2WithHmacSHA512" iterations="100000" keyLength="256"/>
+  - Generate hash: https://tomcat.apache.org/tomcat-9.0-doc/realm-howto.html#Digested_Passwords
+  - Or via env var injection in Docker (see entrypoint.sh / docker-compose.yml).
+
+  DO NOT commit real passwords to version control.
+-->
+<tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+
+  <role rolename="admin-gui"/>
+  <role rolename="admin-script"/>
+  <role rolename="manager-gui"/>
+  <role rolename="manager-script"/>
+  <role rolename="manager-jmx"/>
+  <role rolename="manager-status"/>
+  <role rolename="ncWMS-admin"/>
+
+  <!--
+    Replace CHANGE_ME_NCWMS_PASSWORD_HASH with a proper hash.
+    Docker: inject via NCWMS_ADMIN_PASSWORD environment variable.
+  -->
+  <user username="ncwms"
+        password="CHANGE_ME_NCWMS_PASSWORD_HASH"
+        roles="ncWMS-admin"/>
+
+  <!--
+    Replace CHANGE_ME_ADMIN_PASSWORD_HASH with a proper hash.
+    The default admin:admin is NEVER acceptable in production.
+  -->
+  <user username="admin"
+        password="CHANGE_ME_ADMIN_PASSWORD_HASH"
+        roles="manager-gui,manager-script,manager-jmx,manager-status,admin-script,admin-gui"/>
+
+</tomcat-users>
