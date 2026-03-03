@@ -121,7 +121,7 @@
             <role-name>ncWMS-admin</role-name>
         </auth-constraint>
         <user-data-constraint>
-            <transport-guarantee>NONE</transport-guarantee>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
     <login-config>
