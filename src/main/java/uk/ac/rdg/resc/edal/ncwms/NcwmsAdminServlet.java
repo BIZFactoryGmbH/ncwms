@@ -313,7 +313,8 @@ public class NcwmsAdminServlet extends HttpServlet {
      * Escapes HTML meta-characters to prevent XSS when writing user-supplied
      * values.
      */
-    private static String htmlEscape(String value) {
+    /** Package-private for testing. */
+    static String htmlEscape(String value) {
         if (value == null)
             return "";
         return value.replace("&", "&amp;")
