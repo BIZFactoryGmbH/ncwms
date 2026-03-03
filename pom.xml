@@ -134,8 +134,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
+            <artifactId>mockito-core</artifactId>
+            <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -232,36 +232,14 @@
                     <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
                 </configuration>
             </plugin>
-            <plugin>
-                <!-- On package, generate an image containing all of the
-                    palettes for the documentation -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.5.0</version>
-                <executions>
-                    <execution>
-                        <id>generate-palettes</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <includePluginDependencies>true</includePluginDependencies>
-                    <mainClass>uk.ac.rdg.resc.edal.examples.DrawPalettes</mainClass>
-                    <arguments>
-                        <argument>${basedir}/docs/images/palettes.png</argument>
-                    </arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>uk.ac.rdg.resc</groupId>
-                        <artifactId>edal-examples</artifactId>
-                        <version>${edal.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
+            <!--
+                NOTE: generate-palettes has been removed from the default build.
+                edal-examples:${edal.version} is not published to Maven Central and
+                causes all CI builds to fail.
+                To regenerate docs/images/palettes.png locally, run:
+                  mvn exec:java -Pgenerate-docs
+                (requires edal-examples built locally via the edal project)
+            -->
             <plugin>
                 <groupId>net.ltgt.gwt.maven</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
