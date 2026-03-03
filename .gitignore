@@ -16,3 +16,10 @@ bin/
 *.swp
 *.idea
 *.iml
+.claude/
+.codex/
+Agents.md
+CLAUDE.md
+
+# Security: never commit real credentials
+config/tomcat-users.xml
