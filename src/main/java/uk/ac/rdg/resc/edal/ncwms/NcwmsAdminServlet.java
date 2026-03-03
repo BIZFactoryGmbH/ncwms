@@ -82,6 +82,38 @@ public class NcwmsAdminServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger log = LoggerFactory.getLogger(NcwmsAdminServlet.class);
 
+    /**
+     * Protocols blocked to prevent SSRF and path traversal via dataset locations
+     */
+    private static final java.util.regex.Pattern BLOCKED_LOCATION = java.util.regex.Pattern.compile(
+            "(?i)^(jar:|gopher:|dict:|ftp://|ldap://|file://(/etc|/proc|/sys|/root|/private))");
+
+    /**
+     * Validates a dataset location string to prevent SSRF and path traversal.
+     * Allows: http://, https://, file:// (non-sensitive paths), relative paths.
+     * Blocks: jar:, gopher:, file:///etc/*, file:///proc/*, loopback-SSRF to
+     * metadata services.
+     *
+     * @param location the dataset location to validate
+     * @throws IllegalArgumentException if the location is disallowed
+     */
+    static void validateLocation(String location) {
+        if (location == null || location.trim().isEmpty()) {
+            return; // blank is handled downstream
+        }
+        if (BLOCKED_LOCATION.matcher(location).find()) {
+            log.warn("Blocked disallowed dataset location: {}", location);
+            throw new IllegalArgumentException(
+                    "Dataset location '" + location + "' is not permitted. " +
+                            "Sensitive file:// paths and unsafe protocols are blocked.");
+        }
+        // Block AWS/GCP metadata service SSRF
+        if (location.startsWith("http://169.254.") || location.startsWith("http://metadata.")) {
+            log.warn("Blocked potential metadata-service SSRF location: {}", location);
+            throw new IllegalArgumentException("Dataset location points to a blocked address.");
+        }
+    }
+
     private VelocityEngine velocityEngine;
     private NcwmsCatalogue catalogue;
 
@@ -384,6 +416,12 @@ public class NcwmsAdminServlet extends HttpServlet {
             } else {
                 ds.setTitle(request.getParameter("dataset." + ds.getId() + ".title"));
                 String newLocation = request.getParameter("dataset." + ds.getId() + ".location");
+                try {
+                    validateLocation(newLocation);
+                } catch (IllegalArgumentException e) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                    return;
+                }
                 if (!newLocation.trim().equals(ds.getLocation().trim())) {
                     refreshDataset = true;
                 }
@@ -470,7 +508,15 @@ public class NcwmsAdminServlet extends HttpServlet {
                     title = id;
                 }
                 ds.setTitle(title);
-                ds.setLocation(request.getParameter("dataset.new" + i + ".location"));
+                String newLoc = request.getParameter("dataset.new" + i + ".location");
+                try {
+                    validateLocation(newLoc);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Skipping new dataset {} — invalid location: {}", id, e.getMessage());
+                    i++;
+                    continue;
+                }
+                ds.setLocation(newLoc);
                 ds.setDataReaderClass(request.getParameter("dataset.new" + i + ".reader"));
                 ds.setDisabled(request.getParameter("dataset.new" + i + ".disabled") != null);
                 ds.setQueryable(request.getParameter("dataset.new" + i + ".queryable") != null);
