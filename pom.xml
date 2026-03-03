@@ -34,7 +34,7 @@
             full details).</comments>
         </license>
     </licenses>
-    <!-- groupId, developers and build sections are all inherited by child 
+    <!-- groupId, developers and build sections are all inherited by child
         modules -->
     <developers>
         <developer>
@@ -134,8 +134,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
+            <artifactId>mockito-core</artifactId>
+            <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -151,7 +151,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.2</version>
+                <version>3.4.0</version>
                 <configuration>
                     <primaryArtifact>false</primaryArtifact>
                     <attachClasses>true</attachClasses>
@@ -173,7 +173,7 @@
                 <configuration>
                     <cmdLineOptions>
                         <property>
-                            <!-- This gives no-password access to the admin 
+                            <!-- This gives no-password access to the admin
                                 interface, which is what we want when running as a local standalone application -->
                             <name>realmClassName</name>
                             <value>uk.ac.rdg.resc.edal.ncwms.StandaloneAuthentication</value>
@@ -184,12 +184,12 @@
             <plugin>
                 <!-- Sets the source version to Java 11 -->
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
                     <source>11</source>
                     <target>11</target>
                     <strict>true</strict>
                 </configuration>
-                <version>3.8.1</version>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
@@ -202,58 +202,27 @@
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <configuration>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                </configuration>
-                <version>2.9</version>
-            </plugin>
+            <!-- maven-eclipse-plugin removed: EOL, superseded by m2e -->
+
             <plugin>
                 <!-- Create aggregated javadoc for all modules -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.10.1</version>
                 <configuration>
-                    <!-- Output the apidocs to the base directory. These 
-                        are ignored in .gitignore for most branches, but NOT in the gh-pages branch. 
-                        This makes documentation deployment very simple -->
                     <reportOutputDirectory>${project.basedir}</reportOutputDirectory>
                     <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                    <doclint>none</doclint>
                 </configuration>
             </plugin>
-            <plugin>
-                <!-- On package, generate an image containing all of the 
-                    palettes for the documentation -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.5.0</version>
-                <executions>
-                    <execution>
-                        <id>generate-palettes</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <includePluginDependencies>true</includePluginDependencies>
-                    <mainClass>uk.ac.rdg.resc.edal.examples.DrawPalettes</mainClass>
-                    <arguments>
-                        <argument>${basedir}/docs/images/palettes.png</argument>
-                    </arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>uk.ac.rdg.resc</groupId>
-                        <artifactId>edal-examples</artifactId>
-                        <version>${edal.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
+            <!--
+                NOTE: generate-palettes has been removed from the default build.
+                edal-examples:${edal.version} is not published to Maven Central and
+                causes all CI builds to fail.
+                To regenerate docs/images/palettes.png locally, run:
+                  mvn exec:java -Pgenerate-docs
+                (requires edal-examples built locally via the edal project)
+            -->
             <plugin>
                 <groupId>net.ltgt.gwt.maven</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
@@ -392,9 +361,9 @@
                 <version>2.10.3</version>
                 <configuration>
                     <goal>javadoc:aggregate</goal>
-                    <!-- These links really belong in the child POMs but 
-                        if we put them there, they don't seem to get picked up when building the 
-                        javadoc for the aggregated project. Therefore if the versions of any of the 
+                    <!-- These links really belong in the child POMs but
+                        if we put them there, they don't seem to get picked up when building the
+                        javadoc for the aggregated project. Therefore if the versions of any of the
                         dependencies change these links will also have to be updated. -->
                     <links>
                         <link>http://java.sun.com/j2se/1.6.0/docs/api/</link>
