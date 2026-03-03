@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -118,7 +118,7 @@ public class NcwmsAdminServlet extends HttpServlet {
                     + "\" attribute of the ServletContext has been incorrectly set.");
         }
     }
-    
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -258,7 +258,7 @@ public class NcwmsAdminServlet extends HttpServlet {
 
         /*-
          * Write as plaintext.  We'll get here if:
-         * 
+         *
          * 1) We want to use plaintext
          * 2) HTML templating failed
          */
@@ -268,18 +268,12 @@ public class NcwmsAdminServlet extends HttpServlet {
             writer.write("Dataset: " + dataset.getId() + " (" + dataset.getLocation() + "): "
                     + dataset.getState() + "\n");
             if (dataset.getState() == DatasetState.ERROR) {
-                writer.write("\nStack trace:\n");
                 Throwable error = dataset.getException();
-                StackTraceElement[] stackTrace = error.getStackTrace();
-                for (StackTraceElement el : stackTrace) {
-                    writer.write("\t" + el.toString() + "\n");
-                }
-                if (error.getCause() != null) {
-                    writer.write("\nCaused by:\n\t" + error.getCause().toString() + "\n");
-                }
+                log.error("Dataset {} is in ERROR state", dataset.getId(), error);
+                writer.write("Dataset is in error state - see server logs for details\n");
             }
         } else {
-            writer.write("Dataset: "+datasetId+" not found on this server\n");
+            writer.write("Dataset: " + datasetId + " not found on this server\n");
         }
     }
 
@@ -303,7 +297,7 @@ public class NcwmsAdminServlet extends HttpServlet {
         try {
             template.merge(context, response.getWriter());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to render edit_variables template", e);
         }
     }
 
@@ -532,7 +526,7 @@ public class NcwmsAdminServlet extends HttpServlet {
                 boolean queryable = request
                         .getParameter("dynamicService." + ds.getAlias() + ".queryable") != null;
                 ds.setQueryable(queryable);
-                
+
                 boolean downloadable = request
                         .getParameter("dynamicService." + ds.getAlias() + ".downloadable") != null;
                 ds.setDownloadable(downloadable);
@@ -584,7 +578,7 @@ public class NcwmsAdminServlet extends HttpServlet {
             i++;
         }
 
-        /* 
+        /*
          * Set the properties of the cache
          */
         cache.setEnabled(request.getParameter("cache.enable") != null);
@@ -601,8 +595,8 @@ public class NcwmsAdminServlet extends HttpServlet {
          * Update the cache settings.
          */
         catalogue.setCache(cache);
-        
-        /* 
+
+        /*
          * Set the properties of the dynamic dataset cache
          */
         dynamicCache.setEnabled(request.getParameter("dynamicCache.enable") != null);
@@ -614,10 +608,10 @@ public class NcwmsAdminServlet extends HttpServlet {
         if (!tmpLifetime.isEmpty()) {
             dynamicCache.setElementLifetimeMinutes(Float.parseFloat(tmpLifetime));
         }
-        if(request.getParameter("dynamicCache.empty") != null) {
+        if (request.getParameter("dynamicCache.empty") != null) {
             catalogue.emptyDynamicDatasetCache();
         }
-        
+
         /*
          * Update the dynamic cache settings.
          */
