@@ -2,7 +2,7 @@
 FROM eclipse-temurin:11-jdk-jammy AS builder
 
 # renovate: datasource=github-tags depName=Unidata/edal-java
-ARG EDAL_VERSION=edal-1.5.3.0
+ARG EDAL_VERSION=edal-1.5.3.1
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git maven && \
