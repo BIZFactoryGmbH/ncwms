@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -74,8 +74,8 @@ public class NcwmsApiServlet extends HttpServlet {
         }
     }
 
-    protected void setCatalogue(NcwmsCatalogue catalogue){
-       this.catalogue = catalogue;
+    protected void setCatalogue(NcwmsCatalogue catalogue) {
+        this.catalogue = catalogue;
     }
 
     @Override
@@ -86,8 +86,16 @@ public class NcwmsApiServlet extends HttpServlet {
          * Parameter NAMES not case sensitive, but parameter VALUES are
          */
         String datasetId = request.getParameter("id");
+        if (datasetId == null || datasetId.isBlank()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'id' is required");
+            return;
+        }
         NcwmsConfig ncwmsConfig = catalogue.getConfig();
         DatasetConfig dataset = ncwmsConfig.getDatasetInfo(datasetId);
+        if (dataset == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Dataset not found");
+            return;
+        }
 
         /*
          * Build JSON object for response
@@ -98,7 +106,7 @@ public class NcwmsApiServlet extends HttpServlet {
         datasetInfo.put("lastUpdate", dataset.getLastUpdateTime());
         datasetInfo.put("status", decodeState(dataset));
         JSONArray variables = new JSONArray();
-        for (VariableConfig variable : dataset.getVariables()){
+        for (VariableConfig variable : dataset.getVariables()) {
             JSONObject var = new JSONObject();
             var.put("id", variable.getId());
             var.put("title", variable.getTitle());
@@ -107,11 +115,12 @@ public class NcwmsApiServlet extends HttpServlet {
         datasetInfo.put("variables", variables);
 
         /*
-         * Write out JSON object
+         * Write out JSON object — set Content-Type before getWriter() to ensure charset
          */
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         out.print(datasetInfo.toString());
+        out.flush();
     }
 
     protected String decodeState(DatasetConfig dataset) {

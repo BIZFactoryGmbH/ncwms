@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -67,8 +67,8 @@ public class NcwmsRefreshServlet extends HttpServlet {
         }
     }
 
-    protected void setCatalogue(NcwmsCatalogue catalogue){
-       this.catalogue = catalogue;
+    protected void setCatalogue(NcwmsCatalogue catalogue) {
+        this.catalogue = catalogue;
     }
 
     @Override
@@ -76,8 +76,16 @@ public class NcwmsRefreshServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String datasetId = request.getParameter("id");
+        if (datasetId == null || datasetId.isBlank()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'id' is required");
+            return;
+        }
         NcwmsConfig ncwmsConfig = catalogue.getConfig();
         DatasetConfig dataset = ncwmsConfig.getDatasetInfo(datasetId);
+        if (dataset == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Dataset not found");
+            return;
+        }
         dataset.forceRefresh();
         // Return 202 for accepted
         response.setStatus(HttpServletResponse.SC_ACCEPTED);
