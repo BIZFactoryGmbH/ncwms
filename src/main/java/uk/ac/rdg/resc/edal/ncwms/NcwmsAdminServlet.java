@@ -67,7 +67,6 @@ import uk.ac.rdg.resc.edal.ncwms.config.NcwmsDynamicService;
 import uk.ac.rdg.resc.edal.ncwms.config.NcwmsServerInfo;
 import uk.ac.rdg.resc.edal.util.Extents;
 import uk.ac.rdg.resc.edal.util.TimeUtils;
-import uk.ac.rdg.resc.edal.util.cdm.CdmUtils;
 import uk.ac.rdg.resc.edal.wms.RequestParams;
 
 /**

@@ -22,8 +22,6 @@ package uk.ac.rdg.resc.edal.ncwms.config;
 
 import org.junit.Test;
 
-import java.util.regex.PatternSyntaxException;
-
 import static org.junit.Assert.*;
 
 /**

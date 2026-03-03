@@ -321,9 +321,9 @@ public class NcwmsApplicationServlet extends HttpServlet {
         props.put("class.resource.loader.class",
                 "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
         velocityEngine = new VelocityEngine();
-        velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS,
-                "org.apache.velocity.runtime.log.Log4JLogChute");
-        velocityEngine.setProperty("runtime.log.logsystem.log4j.logger", "velocity");
+        // Velocity 2.x uses SLF4J by default; RUNTIME_LOG_LOGSYSTEM_CLASS and
+        // Log4JLogChute were removed. Set only the SLF4J logger name.
+        velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_NAME, "velocity");
         velocityEngine.init(props);
         context.setAttribute(CONTEXT_VELOCITY_ENGINE, velocityEngine);
     }
