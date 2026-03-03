@@ -45,7 +45,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -214,7 +213,7 @@ public class NcwmsAdminServlet extends HttpServlet {
 
     private void displayStatusPage(HttpServletRequest request, HttpServletResponse response) {
         String datasetId = request.getParameter("dataset");
-        if (StringUtils.isBlank(datasetId)) {
+        if (datasetId == null || datasetId.trim().isEmpty()) {
             throw new IllegalArgumentException(
                     "Must supply the \"dataset\" parameter to view status");
         }
@@ -328,7 +327,7 @@ public class NcwmsAdminServlet extends HttpServlet {
     private void displayEditVariablesPage(HttpServletRequest request,
             HttpServletResponse response) {
         String datasetId = request.getParameter("dataset");
-        if (StringUtils.isBlank(datasetId)) {
+        if (datasetId == null || datasetId.trim().isEmpty()) {
             throw new IllegalArgumentException(
                     "Must supply the \"dataset\" parameter to edit variables");
         }
