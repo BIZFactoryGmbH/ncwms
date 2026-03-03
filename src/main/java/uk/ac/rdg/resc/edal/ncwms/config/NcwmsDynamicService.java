@@ -62,7 +62,7 @@ public class NcwmsDynamicService {
 
     @XmlAttribute(name = "downloadable", required = false)
     private boolean downloadable;
-    
+
     @XmlTransient
     private Pattern idMatchPattern;
 
@@ -82,20 +82,32 @@ public class NcwmsDynamicService {
         this.path = servicePath.trim();
     }
 
+    /** Maximum length for dataset ID match regex to limit ReDoS attack surface. */
+    private static final int MAX_REGEX_LENGTH = 500;
+
     public String getDatasetIdMatch() {
         return datasetIdMatch;
     }
 
     public void setDatasetIdMatch(String datasetIdMatch) {
-        this.datasetIdMatch = datasetIdMatch.trim();
-
-        idMatchPattern = Pattern.compile(datasetIdMatch);
+        String trimmed = datasetIdMatch.trim();
+        if (trimmed.length() > MAX_REGEX_LENGTH) {
+            throw new IllegalArgumentException(
+                    "datasetIdMatch regex exceeds maximum length of " + MAX_REGEX_LENGTH + " characters");
+        }
+        this.datasetIdMatch = trimmed;
+        try {
+            idMatchPattern = Pattern.compile(trimmed);
+        } catch (java.util.regex.PatternSyntaxException e) {
+            throw new IllegalArgumentException(
+                    "Invalid regex for datasetIdMatch: " + e.getDescription(), e);
+        }
     }
 
     public Pattern getIdMatchPattern() {
-        if (idMatchPattern == null)
+        if (idMatchPattern == null) {
             idMatchPattern = Pattern.compile(datasetIdMatch);
-
+        }
         return idMatchPattern;
     }
 
@@ -130,11 +142,11 @@ public class NcwmsDynamicService {
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
-    
+
     public boolean isDownloadable() {
         return downloadable;
     }
-    
+
     public void setDownloadable(boolean downloadable) {
         this.downloadable = downloadable;
     }
@@ -142,7 +154,7 @@ public class NcwmsDynamicService {
     public boolean isQueryable() {
         return queryable;
     }
-    
+
     public void setQueryable(boolean queryable) {
         this.queryable = queryable;
     }

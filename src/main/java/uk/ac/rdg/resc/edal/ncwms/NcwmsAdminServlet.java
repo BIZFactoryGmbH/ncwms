@@ -174,7 +174,9 @@ public class NcwmsAdminServlet extends HttpServlet {
          * http://hostname/ncWMS2/admin/
          */
         if (path == null) {
-            response.sendRedirect(request.getRequestURI() + "/");
+            // Use context path (server-controlled) instead of request URI to prevent open
+            // redirect
+            response.sendRedirect(request.getContextPath() + "/admin/");
             return;
         }
 
@@ -297,7 +299,7 @@ public class NcwmsAdminServlet extends HttpServlet {
         response.setContentType("text/plain");
 
         if (dataset != null) {
-            writer.write("Dataset: " + dataset.getId() + " (" + dataset.getLocation() + "): "
+            writer.write("Dataset: " + htmlEscape(dataset.getId()) + " (" + htmlEscape(dataset.getLocation()) + "): "
                     + dataset.getState() + "\n");
             if (dataset.getState() == DatasetState.ERROR) {
                 Throwable error = dataset.getException();
@@ -305,8 +307,22 @@ public class NcwmsAdminServlet extends HttpServlet {
                 writer.write("Dataset is in error state - see server logs for details\n");
             }
         } else {
-            writer.write("Dataset: " + datasetId + " not found on this server\n");
+            writer.write("Dataset: " + htmlEscape(datasetId) + " not found on this server\n");
         }
+    }
+
+    /**
+     * Escapes HTML meta-characters to prevent XSS when writing user-supplied
+     * values.
+     */
+    private static String htmlEscape(String value) {
+        if (value == null)
+            return "";
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#x27;");
     }
 
     private void displayEditVariablesPage(HttpServletRequest request,
