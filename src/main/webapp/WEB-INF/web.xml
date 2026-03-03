@@ -59,6 +59,37 @@
     <filter>
         <filter-name>CORS</filter-name>
         <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
+        <!--
+            SECURITY: Restrict CORS to known origins.
+            Replace the example below with your actual Godiva3 / WMS client origin(s).
+            Use a comma-separated list. Do NOT use '*' in production.
+            Example: https://godiva.example.com, https://maps.example.com
+        -->
+        <init-param>
+            <param-name>cors.allowOrigin</param-name>
+            <param-value>*</param-value>
+            <!-- TODO US-SEC-007: Change * to your allowed origins before deploying to production -->
+        </init-param>
+        <init-param>
+            <param-name>cors.allowGenericHttpRequests</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.allowSubdomains</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.supportedMethods</param-name>
+            <param-value>GET, HEAD</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.exposedHeaders</param-name>
+            <param-value>Content-Type</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.supportsCredentials</param-name>
+            <param-value>false</param-value>
+        </init-param>
     </filter>
     <filter-mapping>
         <filter-name>CORS</filter-name>
