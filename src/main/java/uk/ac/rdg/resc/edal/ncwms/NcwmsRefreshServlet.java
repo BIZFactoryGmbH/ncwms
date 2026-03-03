@@ -30,11 +30,11 @@ package uk.ac.rdg.resc.edal.ncwms;
 
 import java.io.IOException;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import uk.ac.rdg.resc.edal.catalogue.jaxb.DatasetConfig;
 import uk.ac.rdg.resc.edal.ncwms.config.NcwmsConfig;

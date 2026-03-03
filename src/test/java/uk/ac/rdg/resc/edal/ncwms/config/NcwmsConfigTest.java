@@ -36,7 +36,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.junit.Before;
 import org.junit.Test;
