@@ -435,7 +435,11 @@ public class NcwmsAdminServlet extends HttpServlet {
                 try {
                     validateLocation(newLocation);
                 } catch (IllegalArgumentException e) {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                    try {
+                        response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                    } catch (IOException ioe) {
+                        log.error("Failed to send 400 error for invalid location", ioe);
+                    }
                     return;
                 }
                 if (!newLocation.trim().equals(ds.getLocation().trim())) {
