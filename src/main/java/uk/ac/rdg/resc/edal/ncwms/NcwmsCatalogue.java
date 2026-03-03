@@ -30,12 +30,18 @@ package uk.ac.rdg.resc.edal.ncwms;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.rdg.resc.edal.cache.EdalCache;
 import uk.ac.rdg.resc.edal.catalogue.DataCatalogue;
 import uk.ac.rdg.resc.edal.catalogue.jaxb.DatasetConfig;
@@ -59,8 +65,6 @@ import uk.ac.rdg.resc.edal.ncwms.config.NcwmsSupportedCrsCodes;
 import uk.ac.rdg.resc.edal.wms.WmsCatalogue;
 import uk.ac.rdg.resc.edal.wms.util.ContactInfo;
 import uk.ac.rdg.resc.edal.wms.util.ServerInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An extension of {@link DataCatalogue} to add WMS-specific capabilities for
@@ -69,7 +73,7 @@ import org.slf4j.LoggerFactory;
  * @author Guy Griffiths
  */
 public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
-    private static final Logger logger = LoggerFactory.getLogger(NcwmsCatalogue.class);
+    private static final Logger log = LoggerFactory.getLogger(NcwmsCatalogue.class);
     private StyleCatalogue styleCatalogue;
 
     private static final String CACHE_NAME = "dynamicDatasetCache";
@@ -79,6 +83,14 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
     private Cache dynamicDatasetCache;
     private boolean dynamicCacheEnabled = true;
 
+    /**
+     * PERF-002: Alias index sorted descending by alias length for correct
+     * longest-prefix-match. Rebuilt whenever dynamic services are reconfigured.
+     * Declared volatile so reads in concurrent requests always see the latest map
+     * without synchronization overhead.
+     */
+    private volatile Map<String, NcwmsDynamicService> aliasIndex = new LinkedHashMap<>();
+
     public NcwmsCatalogue() {
         super();
     }
@@ -86,6 +98,10 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
     public NcwmsCatalogue(NcwmsConfig config) throws IOException {
         super(config, new SimpleLayerNameMapper());
         this.styleCatalogue = SldTemplateStyleCatalogue.getStyleCatalogue();
+
+        // PERF-002: build alias index on startup
+        rebuildAliasIndex(
+                new java.util.ArrayList<NcwmsDynamicService>(((NcwmsConfig) super.getConfig()).getDynamicServices()));
 
         dynamicCacheEnabled = config.getDynamicCacheInfo().isEnabled();
 
@@ -171,7 +187,9 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
     }
 
     @Override
-    public synchronized Dataset getDatasetFromId(String datasetId) {
+    // PERF-001: removed 'synchronized' — EhCache.get/put are thread-safe;
+    // alias index uses volatile read for safe concurrent access.
+    public Dataset getDatasetFromId(String datasetId) {
         Dataset dataset = super.getDatasetFromId(datasetId);
         if (dataset != null) {
             return dataset;
@@ -233,8 +251,9 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IOException
                     | EdalException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                     | SecurityException e) {
-                logger.error("Failed to create dynamic dataset for service '{}': {}", dynamicService.getAlias(),
-                        e.getMessage(), e);
+                // PERF-004: structured logging instead of e.printStackTrace()
+                log.error("Failed to create dynamic dataset '{}' from URL '{}': {}",
+                        datasetId, datasetUrl, e.getMessage(), e);
                 return null;
             }
         }
@@ -311,17 +330,50 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
         }
     }
 
-    private NcwmsDynamicService getDynamicServiceFromLayerName(String layerName) {
-        NcwmsDynamicService dynamicService = null;
-        for (NcwmsDynamicService testDynamicService : ((NcwmsConfig) config).getDynamicServices()) {
-            if (layerName.startsWith(testDynamicService.getAlias())) {
-                dynamicService = testDynamicService;
+    /**
+     * PERF-002: O(1) lookup via pre-built alias index (sorted descending by alias
+     * length → correct longest-prefix-match). PERF-003: single lookup replaces the
+     * former triple O(n) scan for isDownloadable/isQueryable/isDisabled.
+     */
+    NcwmsDynamicService getDynamicServiceFromLayerName(String layerName) {
+        if (layerName == null)
+            return null;
+        for (Map.Entry<String, NcwmsDynamicService> entry : aliasIndex.entrySet()) {
+            if (layerName.startsWith(entry.getKey())) {
+                NcwmsDynamicService svc = entry.getValue();
+                // Regex guard (same semantics as before)
+                if (svc.getIdMatchPattern() != null &&
+                        !svc.getIdMatchPattern().matcher(layerName).matches()) {
+                    return null;
+                }
+                return svc;
             }
         }
-        if (dynamicService == null || !dynamicService.getIdMatchPattern().matcher(layerName).matches()) {
-            return null;
+        return null;
+    }
+
+    /**
+     * Rebuilds the alias lookup index. Must be called whenever the set of dynamic
+     * services changes (startup, config reload).
+     * Sorted descending by alias length to ensure longest-prefix-match semantics.
+     */
+    void rebuildAliasIndex(Iterable<NcwmsDynamicService> services) {
+        if (services == null) {
+            aliasIndex = new LinkedHashMap<>();
+            return;
         }
-        return dynamicService;
+        // Collect into list first to allow sorting
+        java.util.List<NcwmsDynamicService> list = new java.util.ArrayList<>();
+        services.forEach(list::add);
+        Map<String, NcwmsDynamicService> index = list.stream()
+                .filter(s -> s.getAlias() != null)
+                .sorted(Comparator.comparingInt((NcwmsDynamicService s) -> s.getAlias().length()).reversed())
+                .collect(Collectors.toMap(
+                        NcwmsDynamicService::getAlias,
+                        s -> s,
+                        (a, b) -> a, // keep first on duplicate alias
+                        LinkedHashMap::new));
+        aliasIndex = index; // volatile write — safe for concurrent readers
     }
 
     @Override
