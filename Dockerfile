@@ -1,6 +1,8 @@
 # Builder stage: compile ncWMS (edal-java resolved from Unidata Maven repo)
-# maven:3.9-eclipse-temurin-11 = Java 11 JDK + Maven 3.9 + unzip (pre-installed)
+# maven:3.9-eclipse-temurin-11 = Java 11 JDK + Maven 3.9
 FROM maven:3.9-eclipse-temurin-11 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
 
 # Build ncWMS (edal-java 1.5.3.1 fetched from artifacts.unidata.ucar.edu/releases/)
 WORKDIR /ncWMS
