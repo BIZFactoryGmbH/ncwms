@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,15 +31,16 @@ package uk.ac.rdg.resc.edal.ncwms.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.FileNotFoundException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import uk.ac.rdg.resc.edal.catalogue.jaxb.CacheInfo;
 import uk.ac.rdg.resc.edal.catalogue.jaxb.DatasetConfig;
@@ -52,9 +53,10 @@ public class NcwmsConfigTest {
 
     @Before
     public void setUp() throws Exception {
-        VariableConfig[] variables = new VariableConfig[] { new VariableConfig("varId", "A Variable", "A data-related quantity",
-                Extents.newExtent(-10f, 10f), "redblue", null, null, null, "linear", 250) };
-        
+        VariableConfig[] variables = new VariableConfig[] {
+                new VariableConfig("varId", "A Variable", "A data-related quantity",
+                        Extents.newExtent(-10f, 10f), "redblue", null, null, null, "linear", 250) };
+
         DatasetConfig dataset = new DatasetConfig(variables);
         dataset.setId("datasetId");
         dataset.setTitle("A Dataset");
@@ -68,14 +70,14 @@ public class NcwmsConfigTest {
         dataset.setMoreInfo("more info");
         dataset.setQueryable(true);
         DatasetConfig[] datasets = new DatasetConfig[] { dataset };
-        
+
         NcwmsContact contact = new NcwmsContact("Guy", "ReSC", "5217", "g.g");
-        
+
         NcwmsServerInfo serverInfo = new NcwmsServerInfo("servername", true, 100, 50,
                 "a fake server", Arrays.asList("fake", "con", "front"), "http://google.com",
                 true);
         CacheInfo cacheInfo = new CacheInfo(true, 2000, 10.0f);
-        String[] codes = {"CRS:187", "EPSG:187"};
+        String[] codes = { "CRS:187", "EPSG:187" };
         NcwmsSupportedCrsCodes crsCodes = new NcwmsSupportedCrsCodes(codes);
 
         config = new NcwmsConfig(datasets, new NcwmsDynamicService[0], contact, serverInfo, cacheInfo, crsCodes);
@@ -88,46 +90,80 @@ public class NcwmsConfigTest {
         assertEquals(variableConfig.getDefaultPlottingParameters().isLogScaling(), false);
         variableConfig.setScaling("logarithmic");
         assertEquals(variableConfig.getDefaultPlottingParameters().isLogScaling(), false);
-        
+
         variableConfig.setColorScaleRange(Extents.newExtent(10f, 100f));
         variableConfig.setScaling("log");
         assertEquals(variableConfig.getDefaultPlottingParameters().isLogScaling(), true);
         variableConfig.setScaling("logarithmic");
         assertEquals(variableConfig.getDefaultPlottingParameters().isLogScaling(), true);
-        
+
         variableConfig.setColorScaleRange(Extents.newExtent(-10f, 10f));
-        assertEquals(variableConfig.getDefaultPlottingParameters().getColorScaleRanges().get(0), Extents.newExtent(10f, 100f));
+        assertEquals(variableConfig.getDefaultPlottingParameters().getColorScaleRanges().get(0),
+                Extents.newExtent(10f, 100f));
         variableConfig.setScaling("linear");
         assertEquals(variableConfig.getDefaultPlottingParameters().isLogScaling(), false);
         variableConfig.setColorScaleRange(Extents.newExtent(-10f, 10f));
-        assertEquals(variableConfig.getDefaultPlottingParameters().getColorScaleRanges().get(0), Extents.newExtent(-10f, 10f));
+        assertEquals(variableConfig.getDefaultPlottingParameters().getColorScaleRanges().get(0),
+                Extents.newExtent(-10f, 10f));
     }
 
     @Test
-    public void testCrsCodeConfig(){
+    public void testCrsCodeConfig() {
         /*
          * Commented out deprecated method.
          */
-        String[] codes = {"CRS:187", "EPSG:187"};
+        String[] codes = { "CRS:187", "EPSG:187" };
         assertArrayEquals(config.getSupportedNcwmsCrsCodes().getSupportedCrsCodes(), codes);
     }
-    
-//    @Test
+
+    /**
+     * Verifies that jakarta.xml.bind marshalling works (JAXB serialisation).
+     * Was previously commented out — now enforced as a regression test for the
+     * jakarta.xml.bind migration from javax.xml.bind.
+     */
+    @Test
     public void testSerialise() throws JAXBException {
         StringWriter serialiseWriter = new StringWriter();
         config.serialise(serialiseWriter);
-        String serialise = serialiseWriter.toString(); 
-        System.out.println(serialise);
+        String serialised = serialiseWriter.toString();
+        assertNotNull("Serialised XML must not be null", serialised);
+        assertTrue("Serialised XML must contain <config>", serialised.contains("<config>"));
+        assertTrue("Serialised XML must contain server title", serialised.contains("servername"));
+        assertTrue("Serialised XML must contain contact name", serialised.contains("Guy"));
+        assertTrue("Serialised XML must contain dataset id", serialised.contains("datasetId"));
     }
 
-//    @Test
-    public void testDeserialise() throws JAXBException, FileNotFoundException {
-        NcwmsConfig deserialise = NcwmsConfig.deserialise(new StringReader(XML));
-//        NcwmsConfig deserialise = NcwmsConfig.deserialise(new FileReader(new File(
-//                "/home/guy/.ncWMS2/config.xml")));
-        System.out.println(deserialise);
+    /**
+     * Verifies that jakarta.xml.bind unmarshalling works (JAXB deserialisation).
+     * Was previously commented out — now enforced as a regression test for the
+     * jakarta.xml.bind migration from javax.xml.bind.
+     */
+    @Test
+    public void testDeserialise() throws JAXBException {
+        NcwmsConfig deserialised = NcwmsConfig.deserialise(new StringReader(XML));
+        assertNotNull("Deserialised config must not be null", deserialised);
+        assertNotNull("Server info must be present", deserialised.getServerInfo());
+        assertEquals("servername", deserialised.getServerInfo().getName());
     }
-    
+
+    /**
+     * Full marshal → unmarshal round-trip: ensures the jakarta.xml.bind
+     * implementation can handle what it produces itself.
+     */
+    @Test
+    public void testJaxbRoundTrip() throws JAXBException {
+        StringWriter writer = new StringWriter();
+        config.serialise(writer);
+        String xml = writer.toString();
+
+        NcwmsConfig deserialised = NcwmsConfig.deserialise(new StringReader(xml));
+        assertNotNull(deserialised);
+        assertEquals("servername", deserialised.getServerInfo().getName());
+        assertEquals("Guy", deserialised.getContactInfo().getName());
+        // verify core fields survived the round-trip
+        assertNotNull("Round-tripped config must not be null", deserialised);
+    }
+
     private final static String XML = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
             + "<config><contact>"
             + "<name>Guy</name>"
@@ -140,8 +176,8 @@ public class NcwmsConfigTest {
             + "<allowFeatureInfo>true</allowFeatureInfo>"
             + "<maxImageWidth>100</maxImageWidth>"
             + "<maxImageHeight>50</maxImageHeight>"
-//            + "<abstract>a fake server</abstract>"
-//            + "<keywords>fake, con, front</keywords>"
+            // + "<abstract>a fake server</abstract>"
+            // + "<keywords>fake, con, front</keywords>"
             + "<url>http://google.com</url>"
             + "<adminpassword>ncWMS</adminpassword>"
             + "<allowglobalcapabilities>true</allowglobalcapabilities>" + "</server>" + "</config>";

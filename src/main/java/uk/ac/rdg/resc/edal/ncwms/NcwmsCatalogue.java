@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2013 The University of Reading
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University of Reading, nor the names of the
  *    authors or contributors may be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -59,6 +59,8 @@ import uk.ac.rdg.resc.edal.ncwms.config.NcwmsSupportedCrsCodes;
 import uk.ac.rdg.resc.edal.wms.WmsCatalogue;
 import uk.ac.rdg.resc.edal.wms.util.ContactInfo;
 import uk.ac.rdg.resc.edal.wms.util.ServerInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An extension of {@link DataCatalogue} to add WMS-specific capabilities for
@@ -67,6 +69,7 @@ import uk.ac.rdg.resc.edal.wms.util.ServerInfo;
  * @author Guy Griffiths
  */
 public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
+    private static final Logger logger = LoggerFactory.getLogger(NcwmsCatalogue.class);
     private StyleCatalogue styleCatalogue;
 
     private static final String CACHE_NAME = "dynamicDatasetCache";
@@ -230,10 +233,8 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IOException
                     | EdalException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
                     | SecurityException e) {
-                /*
-                 * TODO log error
-                 */
-                e.printStackTrace();
+                logger.error("Failed to create dynamic dataset for service '{}': {}", dynamicService.getAlias(),
+                        e.getMessage(), e);
                 return null;
             }
         }

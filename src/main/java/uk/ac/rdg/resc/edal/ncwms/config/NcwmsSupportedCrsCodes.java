@@ -30,8 +30,8 @@ package uk.ac.rdg.resc.edal.ncwms.config;
 
 import java.util.Arrays;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import uk.ac.rdg.resc.edal.wms.util.SupportedCrsCodes;
 

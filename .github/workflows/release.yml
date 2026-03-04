@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    branches: ["master"]
+    # Only trigger when version-relevant files change
+    # (avoids release on docs-only pushes)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 2.5.3) — defaults to pom.xml version"
+        required: false
+
+permissions:
+  contents: write   # needed to create GitHub Release + upload assets
+
+jobs:
+  # ── Gate: only release if CI (build+test) passed on this commit ──────────────
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    # Only release on direct pushes to master (not PRs), and only after
+    # the regular CI build job has already run (checked via needs is not
+    # possible cross-workflow, so we re-use the WAR artifact uploaded by ci.yml)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for tag creation
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: temurin
+          cache: maven
+
+      - name: Build WAR (tests must pass)
+        run: mvn verify -B --no-transfer-progress
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: tag_check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Docker image for release
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: ncwms:${{ steps.version.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "ncWMS2 ${{ steps.version.outputs.tag }}"
+          body: |
+            ## ncWMS2 ${{ steps.version.outputs.tag }}
+
+            ### Changes in this release
+            - **edal-java ${{ steps.version.outputs.version }}** — migrated to [Unidata fork](https://github.com/Unidata/edal-java)
+              - netCDF-Java 5.9.0
+              - Unsigned integer data type support
+              - WMS aggregation bug-fixes
+            - **Jakarta EE migration** — `javax.servlet.*` → `jakarta.servlet.*`, `javax.xml.bind.*` → `jakarta.xml.bind.*`
+            - **Tomcat 10.1 LTS** (Jakarta EE 10 / Servlet 6.0)
+            - Performance: removed `synchronized` from hot path in `NcwmsCatalogue`
+            - Improved logging: SLF4J throughout, structured error messages
+
+            ### Docker
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ steps.version.outputs.tag }}
+            ```
+
+            ### Assets
+            - `ncWMS2.war` — deploy to any Jakarta EE 10 / Tomcat 10.1+ container
+
+            ---
+            Built from commit: ${{ github.sha }}
+          files: target/ncWMS2.war
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

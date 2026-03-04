@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.version>2.10.0</gwt.version>
         <winstone.version>0.9.10</winstone.version>
-        <edal.version>1.5.3</edal.version>
+        <edal.version>1.5.3.1</edal.version>
         <resc.url>http://www.met.reading.ac.uk/resc/home/</resc.url>
     </properties>
 
@@ -105,10 +105,24 @@
             <version>${edal.version}</version>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <!-- Jakarta XML Bind API (replaces javax.xml.bind removed in Java 11+) -->
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <!-- JAXB runtime impl for unit tests (Tomcat provides this at runtime) -->
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>4.0.4</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
@@ -411,4 +425,15 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+    <repositories>
+        <!-- Unidata fork of edal-java (actively maintained, includes upstream Reading fixes
+             + netCDF-Java upgrades, unsigned int support, aggregation bug-fixes) -->
+        <repository>
+            <id>unidata-releases</id>
+            <name>Unidata Releases</name>
+            <url>https://artifacts.unidata.ucar.edu/releases/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
 </project>

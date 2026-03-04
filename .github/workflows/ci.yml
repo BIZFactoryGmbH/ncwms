@@ -78,9 +78,6 @@ jobs:
           tags: ncwms:ci-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Build args to override edal version if needed
-          build-args: |
-            EDAL_VERSION=edal-1.5.3
 
       - name: Export image metadata
         run: |
