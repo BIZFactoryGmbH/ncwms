@@ -101,7 +101,7 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
 
         // PERF-002: build alias index on startup
         rebuildAliasIndex(
-                new java.util.ArrayList<NcwmsDynamicService>(((NcwmsConfig) super.getConfig()).getDynamicServices()));
+                java.util.Arrays.asList(getConfig().getDynamicServices()));
 
         dynamicCacheEnabled = config.getDynamicCacheInfo().isEnabled();
 
@@ -169,7 +169,9 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
     }
 
     public void emptyDynamicDatasetCache() {
-        dynamicDatasetCache.removeAll();
+        if (dynamicDatasetCache != null) {
+            dynamicDatasetCache.removeAll();
+        }
     }
 
     public NcwmsSupportedCrsCodes getSupportedNcwmsCrsCodes() {
@@ -186,9 +188,9 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
         return ((NcwmsConfig) config).getContactInfo();
     }
 
-    @Override
     // PERF-001: removed 'synchronized' — EhCache.get/put are thread-safe;
     // alias index uses volatile read for safe concurrent access.
+    @Override
     public Dataset getDatasetFromId(String datasetId) {
         Dataset dataset = super.getDatasetFromId(datasetId);
         if (dataset != null) {
@@ -341,10 +343,15 @@ public class NcwmsCatalogue extends DataCatalogue implements WmsCatalogue {
         for (Map.Entry<String, NcwmsDynamicService> entry : aliasIndex.entrySet()) {
             if (layerName.startsWith(entry.getKey())) {
                 NcwmsDynamicService svc = entry.getValue();
-                // Regex guard (same semantics as before)
-                if (svc.getIdMatchPattern() != null &&
-                        !svc.getIdMatchPattern().matcher(layerName).matches()) {
-                    return null;
+                // Regex guard: test the path AFTER the alias (same semantics as
+                // getDatasetFromId)
+                if (svc.getIdMatchPattern() != null) {
+                    String relativePath = layerName.substring(entry.getKey().length());
+                    if (relativePath.startsWith("/"))
+                        relativePath = relativePath.substring(1);
+                    if (!svc.getIdMatchPattern().matcher(relativePath).matches()) {
+                        return null;
+                    }
                 }
                 return svc;
             }
