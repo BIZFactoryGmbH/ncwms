@@ -1,25 +1,17 @@
-# Builder stage: compile edal-java and ncWMS
+# Builder stage: compile ncWMS (edal-java resolved from Unidata Maven repo)
 FROM eclipse-temurin:11-jdk-jammy AS builder
 
-# renovate: datasource=github-tags depName=Unidata/edal-java
-ARG EDAL_VERSION=edal-1.5.3.1
-
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git maven && \
+    apt-get install -y --no-install-recommends maven && \
     rm -rf /var/lib/apt/lists/*
 
-# Build edal-java from source (not yet released to Maven Central)
-WORKDIR /edal
-RUN git clone --depth 1 --branch "${EDAL_VERSION}" \
-    https://github.com/Reading-eScience-Centre/edal-java.git . && \
-    mvn clean install -B --no-transfer-progress -DskipTests
-
-# Build ncWMS
+# Build ncWMS (edal-java 1.5.3.1 fetched from artifacts.unidata.ucar.edu/releases/)
 WORKDIR /ncWMS
 COPY . .
 RUN mvn clean package -B --no-transfer-progress -DskipTests && \
     mkdir /ncWMS-war && \
     unzip /ncWMS/target/ncWMS2.war -d /ncWMS-war/
+
 
 # Runtime stage: official Tomcat 10.1 LTS on JRE 11
 # Tomcat 10.1.x = Jakarta EE 10 / Servlet 6.0 (replaces Tomcat 8.5 EOL 2024)
