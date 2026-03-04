@@ -2,7 +2,7 @@
 FROM eclipse-temurin:11-jdk-jammy AS builder
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends maven && \
+    apt-get install -y --no-install-recommends maven unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Build ncWMS (edal-java 1.5.3.1 fetched from artifacts.unidata.ucar.edu/releases/)
